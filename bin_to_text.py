@@ -62,15 +62,17 @@ def clean(text,max_tokens):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--source_dir', default='finished_files/chunked')
+    parser.add_argument('--tgt_dir', default='cnn_dataset')
     parser.add_argument('--max_source_tokens', default=100000)
     parser.add_argument('--max_target_tokens', default=100000)
 
     args = parser.parse_args()
 
-    cnn_debug_dir = os.path.join("cnn_dataset", "cnn_debug")
-    cnn_full_dir = os.path.join("cnn_dataset", "cnn_full")
+    cnn_debug_dir = os.path.join(args.tgt_dir, "cnn_debug")
+    cnn_full_dir = os.path.join(args.tgt_dir, "cnn_full")
 
 
     if not os.path.isdir(cnn_debug_dir):
