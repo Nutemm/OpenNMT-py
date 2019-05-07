@@ -104,6 +104,6 @@ def _get_parser():
 
 if __name__ == "__main__":
     parser = _get_parser()
-
+    
     opt = parser.parse_args()
     main(opt)
