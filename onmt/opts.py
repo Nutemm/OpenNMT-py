@@ -117,6 +117,15 @@ def model_opts(parser):
               choices=['LSTM', 'GRU', 'SRU'],
               action=CheckSRU,
               help="The gate type to use in the RNNs")
+
+    group.add("--transformer_kernel_size", "-transformer_kernel_size", type=int, default = 50,
+               help="Kernel size for the local transformer. It defines the maximal "
+                    "size of the chunks over which the attention is applied")   
+
+    group.add("--transformer_with_shifts", "-transformer_with_shifts", action='store_true',
+               help="Add shiftings in the layers of the local transformer")   
+
+
     # group.add('--residual', '-residual',   action="store_true",
     #                     help="Add residual connections between RNN layers.")
 

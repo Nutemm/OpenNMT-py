@@ -85,7 +85,7 @@ class LocalTransformerEncoder(EncoderBase):
     """
 
     def __init__(self, num_layers, d_model, heads, d_ff, dropout, embeddings,
-                 max_relative_positions):
+                 max_relative_positions, kernel_size, with_shifts):
         super(LocalTransformerEncoder, self).__init__()
 
         self.embeddings = embeddings
@@ -95,8 +95,11 @@ class LocalTransformerEncoder(EncoderBase):
                 max_relative_positions=max_relative_positions)
              for i in range(num_layers)])
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
-        self.kernel_size = 10
-        self.with_shifts = True
+        self.kernel_size = kernel_size
+        self.with_shifts = with_shifts
+
+        print("Kernel size:", self.kernel_size)
+        print("With shifts:", self.with_shifts)
 
     @classmethod
     def from_opt(cls, opt, embeddings):
@@ -108,7 +111,9 @@ class LocalTransformerEncoder(EncoderBase):
             opt.transformer_ff,
             opt.dropout,
             embeddings,
-            opt.max_relative_positions)
+            opt.max_relative_positions,
+            opt.transformer_kernel_size,
+            opt.transformer_with_shifts)
 
     def forward(self, src, lengths=None):
         """See :func:`EncoderBase.forward()`"""
@@ -136,7 +141,7 @@ class LocalTransformerEncoder(EncoderBase):
             mask_with_shifts = F.pad(mask, (math.ceil(self.kernel_size / 2), math.floor(self.kernel_size / 2)), value=1)
 
             #Test about the masks
-            print("len sentence: {}\nNormal mask: {}\nMask with shifts: {}\n".format(src_len,mask[0],mask_with_shifts[0]))   
+            # print("len sentence: {}\nNormal mask: {}\nMask with shifts: {}\n".format(src_len,mask[0],mask_with_shifts[0]))   
             mask_with_shifts = mask_with_shifts.view(-1, 1, self.kernel_size)
 
         #resize so that T becomes kernel_size
