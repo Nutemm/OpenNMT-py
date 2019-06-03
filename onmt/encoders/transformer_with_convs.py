@@ -129,8 +129,6 @@ class TransformerWithConvsEncoder(EncoderBase):
         # print(out.size())
         # print(out)
         mask = words.data.eq(padding_idx).unsqueeze(1)  # [B, 1, T]
-        print("\nm", mask.size())
-
         #Apply convolutions first
         out = out.transpose(1,2).contiguous()
         out = self.first_conv(out)
