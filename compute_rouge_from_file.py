@@ -3,7 +3,7 @@ from collections import defaultdict
 import sys
 from tqdm import tqdm
 
-def compute_score(hypotheses, references):
+def compute_score(references, hypotheses):
     ''' Compute the average F1 rouge scores taking into account all elements in dataset.
 
     Args:
@@ -82,4 +82,4 @@ if __name__ == "__main__":
 
         assert len(summaries) == len(hypotheses)
 
-        print(compute_score(hypotheses, summaries))
+        print(compute_score(summaries, hypotheses))

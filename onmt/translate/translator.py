@@ -813,12 +813,13 @@ class Translator(object):
         return gold_scores
 
     def _report_score(self, name, score_total, words_total):
-        if words_total == 0:
-            msg = "%s No words predicted" % (name,)
-        else:
-            msg = ("%s AVG SCORE: %.4f, %s PPL: %.4f" % (
-                name, score_total / words_total,
-                name, math.exp(-score_total / words_total)))
+        # if words_total == 0:
+        #     msg = "%s No words predicted" % (name,)
+        # else:
+        #     msg = ("%s AVG SCORE: %.4f, %s PPL: %.4f" % (
+        #         name, score_total / words_total,
+        #         name, math.exp(-score_total / words_total)))
+        msg = 'done'
         return msg
 
     def _report_bleu(self, tgt_path):

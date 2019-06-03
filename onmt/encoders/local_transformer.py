@@ -134,7 +134,6 @@ class LocalTransformerEncoder(EncoderBase):
 
         out = F.pad(out,(0,0,size_to_add,0,0,0)) #pad on the left of 2nd dimension (i.e. T) 
         words_data = F.pad(words.data,(size_to_add,0), value=padding_idx) #pad on the left of last dimension (i.e. T) 
-
         mask = words_data.eq(padding_idx).unsqueeze(1) #put 1's on the tokens that shouldn't be considered 
 
         if self.with_shifts:

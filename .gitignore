@@ -8,6 +8,9 @@ multi-bleu.perl
 .DS_Store
 data/
 cnn_dataset
+ag_news
+SST
+yelp_review_full_csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
