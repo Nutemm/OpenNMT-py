@@ -55,7 +55,7 @@ class TransformerDecoderLayer(nn.Module):
             * output ``(batch_size, 1, model_dim)``
             * attn ``(batch_size, 1, src_len)``
 
-        """   
+        """
         dec_mask = None
         if step is None:
             tgt_len = tgt_pad_mask.size(-1)
@@ -89,7 +89,7 @@ class TransformerDecoderLayer(nn.Module):
         return output, attn
 
 
-class TransformerDecoder(DecoderBase):
+class TransformerKmaxDecoder(DecoderBase):
     """The Transformer decoder from "Attention is All You Need".
     :cite:`DBLP:journals/corr/VaswaniSPUJGKP17`
 
@@ -122,7 +122,7 @@ class TransformerDecoder(DecoderBase):
     def __init__(self, num_layers, d_model, heads, d_ff,
                  copy_attn, self_attn_type, dropout, embeddings,
                  max_relative_positions):
-        super(TransformerDecoder, self).__init__()
+        super(TransformerKmaxDecoder, self).__init__()
 
         self.embeddings = embeddings
 
@@ -217,7 +217,7 @@ class TransformerDecoder(DecoderBase):
             attns["copy"] = attn
 
         # TODO change the way attns is returned dict => list or tuple (onnx)
-        return dec_outs, attns
+        return dec_outs, {}
 
     def _init_cache(self, memory_bank):
         self.state["cache"] = {}
