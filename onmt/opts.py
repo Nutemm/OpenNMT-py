@@ -70,7 +70,7 @@ def model_opts(parser):
 
     group.add('--encoder_type', '-encoder_type', type=str, default='rnn',
               choices=['rnn', 'brnn', 'mean', 'transformer', 'cnn', 'local_transformer', 'transformer_with_convs',
-              'transformer_1st_elt'],
+              'transformer_1st_elt', 'transformer_with_convs2'],
               help="Type of encoder layer to use. Non-RNN layers "
                    "are experimental. Options are "
                    "[rnn|brnn|mean|transformer|cnn|local_transformer].")
