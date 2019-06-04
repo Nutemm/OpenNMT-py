@@ -3,7 +3,6 @@ Implementation of "Attention is All You Need"
 """
 
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 
 from onmt.encoders.encoder import EncoderBase
@@ -53,7 +52,7 @@ class TransformerEncoderLayer(nn.Module):
         return self.feed_forward(out)
 
 
-class TransformerWithConvsEncoder(EncoderBase):
+class Transformer1stEncoder(EncoderBase):
     """The Transformer encoder from "Attention is All You Need"
     :cite:`DBLP:journals/corr/VaswaniSPUJGKP17`
 
@@ -86,26 +85,15 @@ class TransformerWithConvsEncoder(EncoderBase):
 
     def __init__(self, num_layers, d_model, heads, d_ff, dropout, embeddings,
                  max_relative_positions):
-        super(TransformerWithConvsEncoder, self).__init__()
-        
-        self.embeddings = embeddings
+        super(Transformer1stEncoder, self).__init__()
 
+        self.embeddings = embeddings
         self.transformer = nn.ModuleList(
             [TransformerEncoderLayer(
                 d_model, heads, d_ff, dropout,
                 max_relative_positions=max_relative_positions)
              for i in range(num_layers)])
-
-        self.first_conv = nn.Conv1d(d_model, d_model, 3, stride=1, padding=1, dilation=1, groups=1, bias=True)
-
-        self.nb_conv_blocks = 6
-        self.conv_layers = [nn.Conv1d(d_model, d_model, 3, stride=1, padding=1, dilation=1, groups=1, bias=True) 
-                        for _ in range(self.nb_conv_blocks)]
-        self.batch_norm_layers = [nn.BatchNorm1d(d_model) for _ in range(self.nb_conv_blocks)]
-
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
-
-        self.first_time = True #to transform the model into a cuda one if necessary
 
     @classmethod
     def from_opt(cls, opt, embeddings):
@@ -121,38 +109,34 @@ class TransformerWithConvsEncoder(EncoderBase):
 
     def forward(self, src, lengths=None):
         """See :func:`EncoderBase.forward()`"""
+
+        #PADDING WHEN SENTENCES DONT HAVE THE SAME LENGTH: TO THE RIGHT
+        #SO WE ADD THE NEW TOKEN TO THE LEFT
+
         self._check_args(src, lengths)
 
         emb = self.embeddings(src)
+        a = torch.ones_like(emb[0]).unsqueeze(0)
+        emb = torch.cat((a, emb), 0)
 
         out = emb.transpose(0, 1).contiguous()
         words = src[:, :, 0].transpose(0, 1)
         w_batch, w_len = words.size()
         padding_idx = self.embeddings.word_padding_idx
 
-        if self.first_time:
-            self.first_time = False
-            if out.is_cuda:
-                for i in range(len(self.conv_layers)):
-                    self.conv_layers[i] = self.conv_layers[i].cuda()
-                    self.batch_norm_layers[i] = self.batch_norm_layers[i].cuda()
-                self.first_conv = self.first_conv.cuda()
-
-        # print(out.size())
-        # print(out)
+        #TODO CHANGE MASK
         mask = words.data.eq(padding_idx).unsqueeze(1)  # [B, 1, T]
-        #Apply convolutions first
-        out = out.transpose(1,2).contiguous()
-        out = self.first_conv(out)
-        for i in range(self.nb_conv_blocks):
-            out = F.relu(self.batch_norm_layers[i](self.conv_layers[i](out)))
-        out = out.transpose(1,2).contiguous()
+        # print(mask.size())
 
-        # print(out.size())
+        empty_tensor = torch.zeros_like(mask[:,:,0]).unsqueeze(1)
+        # print(empty_tensor.size())
+
+        mask = torch.cat((empty_tensor, mask), 2)
+        # print(mask.size())
 
         # Run the forward pass of every layer of the tranformer.
         for layer in self.transformer:
             out = layer(out, mask)
         out = self.layer_norm(out)
 
-        return emb, out.transpose(0, 1).contiguous(), lengths
+        return emb, out.transpose(0, 1).contiguous(), [1+length for length in lengths]

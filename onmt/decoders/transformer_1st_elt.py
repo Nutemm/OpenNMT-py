@@ -9,7 +9,8 @@ from onmt.decoders.decoder import DecoderBase
 from onmt.modules import MultiHeadedAttention, AverageAttention
 from onmt.modules.position_ffn import PositionwiseFeedForward
 
-class TransformerKmaxDecoder(DecoderBase):
+
+class Transformer1stDecoder(DecoderBase):
     """The Transformer decoder from "Attention is All You Need".
     :cite:`DBLP:journals/corr/VaswaniSPUJGKP17`
 
@@ -42,7 +43,7 @@ class TransformerKmaxDecoder(DecoderBase):
     def __init__(self, num_layers, d_model, heads, d_ff,
                  copy_attn, self_attn_type, dropout, embeddings,
                  max_relative_positions):
-        super(TransformerKmaxDecoder, self).__init__()
+        super(Transformer1stDecoder, self).__init__()
 
         self.embeddings = embeddings
 
@@ -103,8 +104,8 @@ class TransformerKmaxDecoder(DecoderBase):
 
         #Memory bank: T_src, B, C
         # print(memory_bank.size())
-        
-        output_w1 = self.kmax_pooling(memory_bank, 0, 1) #B * 1 * C
+
+        output_w1 = memory_bank[0].unsqueeze(0)
         # print(output_w1.size())
 
         dec_outs = torch.cat((output_w1, torch.zeros_like(output_w1)), 0)
