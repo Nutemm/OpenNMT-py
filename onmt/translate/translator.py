@@ -560,7 +560,6 @@ class Translator(object):
                 batch_offset=random_sampler.select_indices
             )
 
-            print(log_probs.size())
             values, argmax = log_probs.max(-1)
 
         argmax = argmax.tolist()
@@ -569,7 +568,6 @@ class Translator(object):
             argmax = list(zip(*argmax))
         else:
             argmax = [[elt,3] for elt in argmax]
-        
         
         results["scores"] = [[0] for i in range(len(argmax))]
         results['predictions'] = [ [ [argmax[i][0], argmax[i][1]]] for i in range(len(argmax))]
