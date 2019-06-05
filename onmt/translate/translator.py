@@ -500,9 +500,96 @@ class Translator(object):
         results["attention"] = random_sampler.attention
         return results
 
+    def _translate_first_word(
+            self,
+            batch,
+            src_vocabs,
+            max_length,
+            min_length=0,
+            sampling_temp=1.0,
+            keep_topk=-1,
+            return_attention=False):
+        """Alternative to beam search. Do random sampling at each step."""
+
+        # TODO: support these blacklisted features.
+        assert self.block_ngram_repeat == 0
+
+        batch_size = batch.batch_size
+
+        # Encoder forward.
+        src, enc_states, memory_bank, src_lengths = self._run_encoder(batch)
+        self.model.decoder.init_state(src, memory_bank, enc_states)
+
+        use_src_map = self.copy_attn
+
+        results = {
+            "predictions": None,
+            "scores": None,
+            "attention": None,
+            "batch": batch,
+            "gold_score": self._gold_score(
+                batch, memory_bank, src_lengths, src_vocabs, use_src_map,
+                enc_states, batch_size, src)}
+
+        memory_lengths = src_lengths
+        src_map = batch.src_map if use_src_map else None
+
+        if isinstance(memory_bank, tuple):
+            mb_device = memory_bank[0].device
+        else:
+            mb_device = memory_bank.device
+
+        random_sampler = RandomSampling(
+            self._tgt_pad_idx, self._tgt_bos_idx, self._tgt_eos_idx,
+            batch_size, mb_device, min_length, self.block_ngram_repeat,
+            self._exclusion_idxs, return_attention, self.max_length,
+            sampling_temp, keep_topk, memory_lengths)
+
+        for step in range(1):
+            # Shape: (1, B, 1)
+            decoder_input = random_sampler.alive_seq[:, -1].view(1, -1, 1)
+
+            log_probs, attn = self._decode_and_generate(
+                decoder_input,
+                memory_bank,
+                batch,
+                src_vocabs,
+                memory_lengths=memory_lengths,
+                src_map=src_map,
+                step=step,
+                batch_offset=random_sampler.select_indices
+            )
+
+            print(log_probs.size())
+            values, argmax = log_probs.max(-1)
+
+        argmax = argmax.tolist()
+
+        if isinstance(argmax[0], list):
+            argmax = list(zip(*argmax))
+        else:
+            argmax = [[elt,3] for elt in argmax]
+        
+        
+        results["scores"] = [[0] for i in range(len(argmax))]
+        results['predictions'] = [ [ [argmax[i][0], argmax[i][1]]] for i in range(len(argmax))]
+        results['attention'] = [[[]] for i in range(len(argmax))]
+
+        return results
+
+
     def translate_batch(self, batch, src_vocabs, attn_debug):
         """Translate a batch of sentences."""
         with torch.no_grad():
+            if self.beam_size == 0:
+                return self._translate_first_word(
+                    batch,
+                    src_vocabs,
+                    self.max_length,
+                    min_length=self.min_length,
+                    sampling_temp=self.random_sampling_temp,
+                    keep_topk=self.sample_from_topk,
+                    return_attention=attn_debug or self.replace_unk)
             if self.beam_size == 1:
                 return self._translate_random_sampling(
                     batch,

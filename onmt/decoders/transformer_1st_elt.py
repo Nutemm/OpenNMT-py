@@ -121,12 +121,3 @@ class Transformer1stDecoder(DecoderBase):
         self.state["cache"] = {}
         batch_size = memory_bank.size(1)
         depth = memory_bank.size(-1)
-
-        for i, layer in enumerate(self.transformer_layers):
-            layer_cache = {"memory_keys": None, "memory_values": None}
-            if isinstance(layer.self_attn, AverageAttention):
-                layer_cache["prev_g"] = torch.zeros((batch_size, 1, depth))
-            else:
-                layer_cache["self_keys"] = None
-                layer_cache["self_values"] = None
-            self.state["cache"]["layer_{}".format(i)] = layer_cache
