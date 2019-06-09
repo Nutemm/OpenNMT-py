@@ -94,9 +94,19 @@ class LocalTransformerEncoder(EncoderBase):
                 d_model, heads, d_ff, dropout,
                 max_relative_positions=max_relative_positions)
              for i in range(num_layers)])
+
+        self.first_conv = nn.Conv1d(d_model, d_model, 3, stride=1, padding=1, dilation=1, groups=1, bias=True)
+
+        self.nb_conv_blocks = 6
+        self.conv_layers = [nn.Conv1d(d_model, d_model, 3, stride=1, padding=1, dilation=1, groups=1, bias=True) 
+                        for _ in range(self.nb_conv_blocks)]
+
+        
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
         self.kernel_size = kernel_size
         self.with_shifts = with_shifts
+         self.first_time = True #to transform the model into a cuda one if necessary
+
 
         print("Kernel size:", self.kernel_size)
         print("With shifts:", self.with_shifts)
@@ -127,6 +137,23 @@ class LocalTransformerEncoder(EncoderBase):
         words = src[:, :, 0].transpose(0, 1).contiguous()
         w_batch, w_len = words.size()
         padding_idx = self.embeddings.word_padding_idx
+
+        if self.first_time:
+            self.first_time = False
+            if out.is_cuda:
+                for i in range(len(self.conv_layers)):
+                    self.conv_layers[i] = self.conv_layers[i].cuda()
+                self.first_conv = self.first_conv.cuda()
+
+        # print(out.size())
+        # print(out)
+        mask = words.data.eq(padding_idx).unsqueeze(1)  # [B, 1, T]
+        #Apply convolutions first
+        out = out.transpose(1,2).contiguous()
+        out = self.first_conv(out)
+        for i in range(self.nb_conv_blocks):
+            out = F.relu(self.conv_layers[i](out))
+        out = out.transpose(1,2).contiguous()
 
         #Shorten sentences w.r.t. kernel size 
         batch_size, src_len, d = out.size()
