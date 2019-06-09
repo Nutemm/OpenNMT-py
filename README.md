@@ -1,7 +1,7 @@
 # GitHub repository for my CS224U project: adapting Transformer to text classification.
 
 
-## For more indications about how the code works, see OpenNMT-py real repository: https://github.com/OpenNMT/OpenNMT
+## For more indications about how the code works, see OpenNMT-py source repository: https://github.com/OpenNMT/OpenNMT
 
 Below is the main workflow to make the code run and get results:
 
