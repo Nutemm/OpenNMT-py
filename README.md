@@ -1,5 +1,8 @@
 # GitHub repository for my CS224U project: adapting Transformer to text classification.
 
+The purpose of the project was to apply the Transformer architecture on several text classification datasets to measure its efficiency, at word and character level. I also introduced a few changes to the original architecture to make training more stable and compared the new results with the ones of the vanilla architecture.
+
+The final project report can be found here: https://github.com/Nutemm/OpenNMT-py/blob/master/Project_final_report_CS224U.pdf
 
 ## For more indications about how the code works, see OpenNMT-py source repository: https://github.com/OpenNMT/OpenNMT
 
